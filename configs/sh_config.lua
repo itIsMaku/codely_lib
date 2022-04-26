@@ -1,15 +1,5 @@
 Config = {}
 
-Config.ESX = {
-    SharedObjectTrigger = 'esx:getSharedObject',
-    --[[
-        Versions:
-            1.1 - Without weight system, everything what's below and including this version
-            1.2 - With weight system, everything what's above and including this version
-    ]]
-    Version = 1.1
-}
-
 Config.LotteryShop = {
     Location = vector3(-47.21, -1755.72, 29.42),
     Blip = {
@@ -77,7 +67,7 @@ function SendClientNotification(type, text)
         exports['mythic_notify']:SendAlert('inform', text)
     end
     ]]
-    ESX.ShowNotification(text)
+    QBCore.Functions.Notify(text, 'primary', 5000)
 end
 
 -- Server side notifications
@@ -90,7 +80,7 @@ function SendServerNotification(source, type, text)
         TriggerClientEvent('mythic_notify:client:SendAlert', source, { type = 'inform', text = text })
     end
     ]]
-    TriggerClientEvent('esx:showNotification', source, text)
+    TriggerClientEvent('QBCore:Notify', source, text, 'primary')
 end
 
 -- Down you can implement your own chat message

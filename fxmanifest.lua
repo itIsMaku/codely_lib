@@ -4,6 +4,8 @@ lua54 'yes'
 version '1.2'
 
 client_scripts {
+	'client/cl_menuhandler.lua',
+	'client/cl_menu.lua',
 	'client/cl_utils.lua',
 	'client/cl_main.lua'
 }

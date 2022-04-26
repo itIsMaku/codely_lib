@@ -1,5 +1,4 @@
-ESX = nil
-TriggerEvent(Config.ESX.SharedObjectTrigger, function(obj) ESX = obj end)
+local QBCore = exports['qb-core']:GetCoreObject()
 
 function SendWebhook(url, username, color, title, message, footer)
     local content = {
@@ -19,103 +18,74 @@ function SendWebhook(url, username, color, title, message, footer)
         'POST',
         json.encode(
             {
-                username = username,
-                embeds = content
-            }
+            username = username,
+            embeds = content
+        }
         ),
         {
-            ['Content-Type'] = 'application/json'
-        }
+        ['Content-Type'] = 'application/json'
+    }
     )
 end
 
-function GetCharacterName(identifier)
+function GetCharacterName(license)
     local result = MySQL.Sync.fetchAll(
-        'SELECT firstname, lastname FROM users WHERE identifier = @identifier',
+        'SELECT charinfo FROM players WHERE license = @license',
         {
-            ['identifier'] = identifier
-        }
+        ['license'] = license
+    }
     )
     return result[1].firstname .. ' ' .. result[1].lastname
 end
 
 function RegisterTicket(source, ticketType)
-    local xPlayer = ESX.GetPlayerFromId(source)
+    local qbPlayer = QBCore.Functions.GetPlayer(source)
     MySQL.Async.execute(
         "INSERT INTO lottery (identifier, type, run, win) VALUES (@identifier, @type, 0, 0)",
         {
-            ['identifier'] = xPlayer.getIdentifier(),
+            ['identifier'] = qbPlayer.license,
             ['type'] = ticketType
         },
         function(changed)
-            Info('Registered new lottery ticket ' .. ticketType .. '. (' .. xPlayer.getName() .. ';' .. xPlayer.getIdentifier() .. ')')
-            SendWebhook(
-                Webhooks.Bought.URL,
-                Webhooks.Bought.Username,
-                Webhooks.Bought.Color,
-                Webhooks.Bought.Title,
-                (Webhooks.Bought.Description)
-                :format(
-                    GetCharacterName(xPlayer.getIdentifier()),
-                    ticketType
-                ),
-                (Webhooks.Bought.Footer)
-                :format(
-                    xPlayer.getName(),
-                    xPlayer.getIdentifier()
-                )
+        Info('Registered new lottery ticket ' .. ticketType .. '. (' .. qbPlayer.name .. ';' .. qbPlayer.identifier .. ')')
+        SendWebhook(
+            Webhooks.Bought.URL,
+            Webhooks.Bought.Username,
+            Webhooks.Bought.Color,
+            Webhooks.Bought.Title,
+            (Webhooks.Bought.Description)
+            :format(
+                GetCharacterName(qbPlayer.identifier),
+                ticketType
+            ),
+            (Webhooks.Bought.Footer)
+            :format(
+                qbPlayer.name,
+                qbPlayer.identifier
             )
-        end
+        )
+    end
     )
 end
 
 RegisterServerEvent('codely_lottery:buyTicket')
 AddEventHandler('codely_lottery:buyTicket', function(ticketType)
-    local xPlayer = ESX.GetPlayerFromId(source)
+    local qbPlayer = QBCore.Functions.GetPlayer(source)
     local price = Config.LotteryShop.Tickets[ticketType]
     local itemName = 'ticket_' .. ticketType
-    if xPlayer.getMoney() >= price then
-        if Config.ESX.Version == 1.1 then
-            xPlayer.removeMoney(price)
-            xPlayer.addInventoryItem(itemName, 1)
-            SendServerNotification(
-                source,
-                'success',
-                (Config.LotteryShop.Messages.Bought)
-                :format(
-                    ticketType,
-                    price
-                )
+    if qbPlayer.Functions.GetMoney('cash') >= price then
+        qbPlayer.Functions.RemoveMoney('cash', price)
+        qbPlayer.Functions.AddItem(itemName, 1)
+        SendServerNotification(
+            source,
+            'success',
+            (Config.LotteryShop.Messages.Bought)
+            :format(
+                ticketType,
+                price
             )
-            RegisterTicket(source, ticketType)
-        elseif Config.ESX.Version == 1.2 then
-            if xPlayer.canCarryItem(itemName, 1) then
-                xPlayer.removeMoney(price)
-                xPlayer.addInventoryItem(itemName, 1)
-                SendServerNotification(
-                    source,
-                    'success',
-                    (Config.LotteryShop.Messages.Bought)
-                    :format(
-                        ticketType,
-                        price
-                    )
-                )
-                RegisterTicket(source, ticketType)
-            else
-                SendServerNotification(
-                    source,
-                    'error',
-                    Config.LotteryShop.Messages.CantCarryMoreItems
-                )
-            end
-        else
-            SendServerNotification(
-                source,
-                'error',
-                'The wrong version of ESX is in the configuration files.'
-            )
-        end
+        )
+        RegisterTicket(source, ticketType)
     else
         SendServerNotification(
             source,
@@ -129,49 +99,41 @@ function IsPlayerHasWin(identifier, ticketType)
     local result = MySQL.Sync.fetchAll(
         'SELECT * FROM lottery_wins WHERE identifier = @identifier AND type = @type',
         {
-            ['identifier'] = identifier,
-            ['type'] = ticketType
-        }
+        ['identifier'] = identifier,
+        ['type'] = ticketType
+    }
     )
-    if result[1] == nil then
-        return false
-    else
-        return true
-    end
+    return not result[1] == nil
 end
 
 function IsPlayerClaimedWin(identifier, ticketType)
     local result = MySQL.Sync.fetchAll(
         'SELECT * FROM lottery_wins WHERE identifier = @identifier AND type = @type AND claimed = 0',
         {
-            ['identifier'] = identifier,
-            ['type'] = ticketType
-        }
+        ['identifier'] = identifier,
+        ['type'] = ticketType
+    }
     )
-    if result[1] == nil then
-        return true
-    else
-        return false
-    end
+    return result[1] == nil
 end
 
 function ClaimWin(source, identifier, ticketType)
-    local xPlayer = ESX.GetPlayerFromId(source)
+    local qbPlayer = QBCore.Functions.GetPlayer(source)
     local result = MySQL.Sync.fetchAll(
         'SELECT * FROM lottery_wins WHERE identifier = @identifier AND type = @type AND claimed = 0',
         {
-            ['identifier'] = identifier,
-            ['type'] = ticketType
-        }
+        ['identifier'] = identifier,
+        ['type'] = ticketType
+    }
     )
     local id = result[1].id
     MySQL.Async.execute(
         "UPDATE lottery_wins SET claimed = 1 WHERE id = @id",
         {
-            ['id'] = id
-        }
+        ['id'] = id
+    }
     )
-    xPlayer.addMoney(result[1].price)
+    qbPlayer.Functions.AddMoney('cash', result[1].price)
     SendServerNotification(
         source,
         'info',
@@ -185,33 +147,31 @@ end
 
 RegisterServerEvent('codely_lottery:payOff')
 AddEventHandler('codely_lottery:payOff', function(ticketType)
-    local _source = source
-    local xPlayer = ESX.GetPlayerFromId(_source)
-    --local itemName = 'ticket_' .. ticketType
-    --if xPlayer.getInventoryItem(itemName).count > 0 then
-    if IsPlayerHasWin(xPlayer.getIdentifier(), ticketType) then
-        if not IsPlayerClaimedWin(xPlayer.getIdentifier(), ticketType) then
+    local source = source
+    local qbPlayer = QBCore.Functions.GetPlayer(source)
+    if IsPlayerHasWin(qbPlayer.license, ticketType) then
+        if not IsPlayerClaimedWin(qbPlayer.license, ticketType) then
             ClaimWin(
-                _source,
-                xPlayer.getIdentifier(),
+                source,
+                qbPlayer.license,
                 ticketType
             )
         else
             SendServerNotification(
-                _source,
+                source,
                 'error',
                 Config.LotteryShop.Messages.NotWin
             )
         end
     else
         SendServerNotification(
-            _source,
+            source,
             'error',
             Config.LotteryShop.Messages.NotWin
         )
     end
     --else
-    --    SendServerNotification(_source, 'error', Config.LotteryShop.Messages.NotItem)
+    --    SendServerNotification(source, 'error', Config.LotteryShop.Messages.NotItem)
     --end
 end)
 
@@ -226,10 +186,10 @@ function RegisterWin(identifier, ticketType, price)
     MySQL.Async.execute(
         "INSERT INTO lottery_wins (identifier, type, price, claimed) VALUES (@identifier, @type, @price, 0)",
         {
-            ['identifier'] = identifier,
-            ['type'] = ticketType,
-            ['price'] = price
-        }
+        ['identifier'] = identifier,
+        ['type'] = ticketType,
+        ['price'] = price
+    }
     )
 end
 
@@ -237,8 +197,8 @@ function StartLottery(ticketType)
     local tickets = MySQL.Sync.fetchAll(
         'SELECT * FROM lottery WHERE run = 0 AND type = @type',
         {
-            ['type'] = ticketType
-        }
+        ['type'] = ticketType
+    }
     )
     if #tickets == 0 then
         Warn('Lottery win was cancelled. Nobody bought tickets.')
@@ -265,14 +225,14 @@ function StartLottery(ticketType)
     MySQL.Async.execute(
         "UPDATE lottery SET run = 1 WHERE type = @type",
         {
-            ['type'] = ticketType
-        }
+        ['type'] = ticketType
+    }
     )
     MySQL.Async.execute(
         "UPDATE lottery SET win = 1 WHERE id = @id",
         {
-            ['id'] = winRow.id
-        }
+        ['id'] = winRow.id
+    }
     )
     RegisterWin(
         winRow.identifier,
