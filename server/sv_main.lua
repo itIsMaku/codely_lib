@@ -28,11 +28,11 @@ function SendWebhook(url, username, color, title, message, footer)
     )
 end
 
-function GetCharacterName(license)
+function GetCharacterName(citizenid)
     local result = MySQL.Sync.fetchAll(
-        'SELECT charinfo FROM players WHERE license = @license',
+        'SELECT charinfo FROM players WHERE citizenid = @citizenid',
         {
-        ['license'] = license
+        ['citizenid'] = citizenid
     }
     )
     return result[1].firstname .. ' ' .. result[1].lastname
@@ -43,11 +43,11 @@ function RegisterTicket(source, ticketType)
     MySQL.Async.execute(
         "INSERT INTO lottery (identifier, type, run, win) VALUES (@identifier, @type, 0, 0)",
         {
-            ['identifier'] = qbPlayer.license,
+            ['identifier'] = qbPlayer.PlayerData.citizenid,
             ['type'] = ticketType
         },
         function(changed)
-        Info('Registered new lottery ticket ' .. ticketType .. '. (' .. qbPlayer.name .. ';' .. qbPlayer.identifier .. ')')
+        Info('Registered new lottery ticket ' .. ticketType .. '. (' .. qbPlayer.PlayerData.name .. ';' .. qbPlayer.PlayerData.citizenid .. ')')
         SendWebhook(
             Webhooks.Bought.URL,
             Webhooks.Bought.Username,
@@ -55,13 +55,13 @@ function RegisterTicket(source, ticketType)
             Webhooks.Bought.Title,
             (Webhooks.Bought.Description)
             :format(
-                GetCharacterName(qbPlayer.identifier),
+                GetCharacterName(qbPlayer.PlayerData.citizenid),
                 ticketType
             ),
             (Webhooks.Bought.Footer)
             :format(
                 qbPlayer.name,
-                qbPlayer.identifier
+                qbPlayer.PlayerData.citizenid
             )
         )
     end
@@ -72,9 +72,10 @@ RegisterServerEvent('codely_lottery:buyTicket')
 AddEventHandler('codely_lottery:buyTicket', function(ticketType)
     local qbPlayer = QBCore.Functions.GetPlayer(source)
     local price = Config.LotteryShop.Tickets[ticketType]
-    local itemName = 'ticket_' .. ticketType
+    local itemName = 'ticket_' .. ticketType:lower()
     if qbPlayer.Functions.GetMoney('cash') >= price then
         qbPlayer.Functions.RemoveMoney('cash', price)
+        print(itemName)
         qbPlayer.Functions.AddItem(itemName, 1)
         SendServerNotification(
             source,

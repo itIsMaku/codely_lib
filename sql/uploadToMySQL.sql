@@ -17,10 +17,3 @@ CREATE TABLE `lottery_wins` (
 
 	PRIMARY KEY (`id`)
 );
-
-INSERT INTO `items` (name, label, weight) VALUES
-	('ticket_Bronze', 'Lottery Ticket - Bronze', 1),
-	('ticket_Silver', 'Lottery Ticket - Silver', 1),
-	('ticket_Gold', 'Lottery Ticket - Gold', 1),
-	('ticket_Diamond', 'Lottery Ticket - Diamond', 1)
-;
