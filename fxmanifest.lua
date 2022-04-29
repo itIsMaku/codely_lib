@@ -21,7 +21,9 @@ server_scripts {
 
 	'server/sv_utils.lua',
 	'server/sv_dbloader.lua',
-	'server/sv_main.lua'
+	'server/sv_functions.lua',
+	'server/sv_main.lua',
+	'server/sv_loadhandler.lua'
 }
 
 depencies {
