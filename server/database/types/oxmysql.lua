@@ -21,5 +21,7 @@ if MySQLScript == 'oxmysql' then
             )
     end
 
+    MySQL.Async.fetchScalar = MySQL.Async.fetchScalar
+
     MySQL.Async.execute = MySQL.Sync.execute
 end

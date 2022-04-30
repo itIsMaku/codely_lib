@@ -1,8 +1,0 @@
-1. Import sql/uploadToMySQL.sql
-2. Setup all configs in configs folder
-3. Add lines by your category to qbcore/shared/items.lua
-    e.g.:
-        ['ticket_bronze']  = { ['name'] = 'ticket_bronze', ['label'] = 'Bronze Lottery Ticket', ['weight'] = 0, ['type'] = 'item', ['image'] = 'superlotto.png', ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['description'] = 'A ticket to lottery' },
-	    ['ticket_silver']  = { ['name'] = 'ticket_silver', ['label'] = 'Silver Lottery Ticket', ['weight'] = 0, ['type'] = 'item', ['image'] = 'superlotto.png', ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['description'] = 'A ticket to lottery' },
-	    ['ticket_gold']    = { ['name'] = 'ticket_gold', ['label'] = 'Gold Lottery Ticket', ['weight'] = 0, ['type'] = 'item', ['image'] = 'superlotto.png', ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['description'] = 'A ticket to lottery' },
-	    ['ticket_diamond'] = { ['name'] = 'ticket_diamond', ['label'] = 'Diamond Lottery Ticket', ['weight'] = 0, ['type'] = 'item', ['image'] = 'superlotto.png', ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['description'] = 'A ticket to lottery' },

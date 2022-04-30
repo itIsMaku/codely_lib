@@ -40,4 +40,12 @@ if MySQLScript == 'ghattimysql' then
                 callback
             )
     end
+
+    MySQl.Async.fetchScalar = function(sqlQuery, table, callback)
+        return exports['ghmattimysql']
+            :scalar(sqlQuery,
+                table,
+                callback
+            )
+    end
 end
