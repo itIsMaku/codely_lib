@@ -100,3 +100,5 @@ function InitializeStorage(name, url, authToken)
 
     return Storage
 end
+
+exports('InitializeStorage', InitializeStorage)
