@@ -1,7 +1,9 @@
 game "gta5"
 fx_version 'cerulean'
 lua54 'yes'
-version '1.2'
+version '1.3'
+author 'maku#5434'
+description 'Lib for all codely scripts'
 
 client_scripts {
 	'client/framework/cl_frameworkloader.lua',
@@ -59,13 +61,8 @@ server_exports {
 	'GetCoreLoggerObject',
 	'GetLoaderObject',
 	'GetFrameworkObject',
-	'GetDatabaseObject'
-}
-
-escrow_ignore {
-	'server/database/types/*.lua',
-	'server/framework/types/*.lua',
-	'configs/*.lua'
+	'GetDatabaseObject',
+        'InitializeStorage'
 }
 
 dependency '/server:4700' -- You must have server artifact at least 4700
